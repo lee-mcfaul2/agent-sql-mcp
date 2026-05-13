@@ -1,0 +1,35 @@
+image:
+  repository: ghcr.io/lee-mcfaul2/agent-sql-mcp
+  tag: 0.1.0
+  pullPolicy: IfNotPresent
+
+replicas: 2
+
+resources:
+  requests: { cpu: 100m, memory: 128Mi }
+  limits:   { cpu: 500m, memory: 512Mi }
+
+namespace: mcp
+
+oidc:
+  issuer: ""
+  audience: agent-sql-mcp
+
+gatewaySPIFFE: "spiffe://ai-security.io/ns/gateway/sa/agent-gateway-sa"
+
+database:
+  secretName: agent-sql-mcp-db
+  secretKey: dsn
+  poolMax: 25
+  queryTimeoutSeconds: 5
+
+schemaVersion: "v1"
+
+service:
+  port: 8443
+
+audit:
+  retentionDays: 90
+
+migrations:
+  image: migrate/migrate:v4.18.1

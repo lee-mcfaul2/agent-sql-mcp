@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: agent-sql-mcp-migrate
+  namespace: {{ .Values.namespace }}
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: hook-succeeded
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: "{{ .Values.migrations.image }}"
+          command: ["migrate"]
+          args:
+            - "-path=/migrations"
+            - "-database=$(SQLMCP_DATABASE_URL)"
+            - "up"
+          env:
+            - name: SQLMCP_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.database.secretName }}
+                  key:  {{ .Values.database.secretKey }}
+          volumeMounts:
+            - name: migrations
+              mountPath: /migrations
+      volumes:
+        - name: migrations
+          configMap: { name: agent-sql-mcp-migrations }
