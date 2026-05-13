@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json"
 	"log/slog"
 	"net/http"
 
@@ -57,11 +58,14 @@ func handleReadyz(deps Deps) http.HandlerFunc {
 	}
 }
 
-// Stubs — replaced in Tasks 18 and 19.
 func handleHandshake(deps Deps) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusNotImplemented)
-		_, _ = w.Write([]byte("TODO Task 18"))
+		obs.HandshakeCallsTotal.Inc()
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]string{
+			"schema_version": deps.SchemaVersion,
+			"schema_digest":  "sha256:" + deps.Catalog.Digest,
+		})
 	}
 }
 
