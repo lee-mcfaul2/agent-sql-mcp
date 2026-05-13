@@ -1,0 +1,21 @@
+# Build outputs
+/bin/
+/out/
+*.tar.gz
+
+# Test/coverage
+.coverage
+coverage.out
+coverage.xml
+*.log
+
+# IDE/editor
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# Local secrets / dev keys
+/dev/secrets/
+*.pem
+*.key
