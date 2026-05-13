@@ -36,7 +36,9 @@ func newTestIdP(t *testing.T) (*httptest.Server, jwk.Key) {
 		t.Fatal(err)
 	}
 	set := jwk.NewSet()
-	set.AddKey(pubKey)
+	if err := set.AddKey(pubKey); err != nil {
+		t.Fatal(err)
+	}
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
