@@ -19,3 +19,6 @@ coverage.xml
 /dev/secrets/
 *.pem
 *.key
+
+# Generated: embedded schema copies (populated by make embed-schemas)
+/cmd/sql-mcp/embedded/

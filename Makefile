@@ -1,8 +1,12 @@
-.PHONY: build test test-unit test-integration test-conformance lint run-local clean
+.PHONY: build embed-schemas test test-unit test-integration test-conformance lint run-local clean
 
 BIN := bin/sql-mcp
 
-build:
+embed-schemas:
+	mkdir -p cmd/sql-mcp/embedded
+	cp schemas/*.json cmd/sql-mcp/embedded/
+
+build: embed-schemas
 	@mkdir -p bin
 	go build -o $(BIN) ./cmd/sql-mcp
 
