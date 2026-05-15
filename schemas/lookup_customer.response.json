@@ -5,14 +5,15 @@
   "properties": {
     "customer": {
       "type": "object",
-      "required": ["id", "name", "email", "created_at"],
+      "required": ["id", "name", "email", "created_at", "region"],
       "properties": {
         "id":         { "type": "integer" },
         "name":       { "type": "string" },
         "email":      { "type": "string" },
         "phone":      { "type": ["string", "null"] },
         "address":    { "type": ["string", "null"] },
-        "created_at": { "type": "string", "format": "date-time" }
+        "created_at": { "type": "string", "format": "date-time" },
+        "region":     { "type": "string" }
       },
       "additionalProperties": false
     }

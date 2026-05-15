@@ -9,10 +9,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/lee-mcfaul2/agent-sql-mcp/internal/auth"
 	"github.com/lee-mcfaul2/agent-sql-mcp/internal/server"
 	"github.com/lee-mcfaul2/agent-sql-mcp/internal/store"
 	"github.com/lee-mcfaul2/agent-sql-mcp/internal/tools"
 )
+
+// testClaims is the default identity used by integration tests — has the
+// tool-level customers:read perm; lacks customers:atlantis:read.
+var testClaims = auth.UserClaims{Sub: "integration", Permissions: []string{"customers:read", "orders:read"}}
 
 func nullLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
@@ -34,7 +39,7 @@ func TestSearchCustomer_Live(t *testing.T) {
 	p := newPool(t, dsn)
 
 	name := "Customer 0"
-	res, err := tools.SearchCustomer(context.Background(), p, tools.SearchCustomerArgs{Name: &name})
+	res, err := tools.SearchCustomer(context.Background(), p, testClaims, tools.SearchCustomerArgs{Name: &name})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,7 +53,7 @@ func TestLookupCustomer_LiveAndNotFound(t *testing.T) {
 	defer cleanup()
 	p := newPool(t, dsn)
 
-	res, err := tools.LookupCustomer(context.Background(), p, tools.LookupCustomerArgs{CustomerID: 1})
+	res, err := tools.LookupCustomer(context.Background(), p, testClaims, tools.LookupCustomerArgs{CustomerID: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,7 +61,7 @@ func TestLookupCustomer_LiveAndNotFound(t *testing.T) {
 		t.Errorf("id: %d", res.Customer.ID)
 	}
 
-	_, err = tools.LookupCustomer(context.Background(), p, tools.LookupCustomerArgs{CustomerID: 99999})
+	_, err = tools.LookupCustomer(context.Background(), p, testClaims, tools.LookupCustomerArgs{CustomerID: 99999})
 	if err != tools.ErrNotFound {
 		t.Errorf("expected ErrNotFound, got %v", err)
 	}

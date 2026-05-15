@@ -9,6 +9,11 @@ type Customer struct {
 	Phone     *string   `json:"phone"`
 	Address   *string   `json:"address"`
 	CreatedAt time.Time `json:"created_at"`
+	// Region tags the customer's data residency / authz partition. A value of
+	// "atlantis" is gated by the customers:atlantis:read permission; the
+	// row-level filter in search_customer.go and lookup_customer.go excludes
+	// these rows from callers who lack that perm.
+	Region string `json:"region"`
 }
 
 type Order struct {

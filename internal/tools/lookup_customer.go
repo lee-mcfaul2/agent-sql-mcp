@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/lee-mcfaul2/agent-sql-mcp/internal/auth"
 	"github.com/lee-mcfaul2/agent-sql-mcp/internal/store"
 )
 
@@ -19,16 +20,21 @@ type LookupCustomerResponse struct {
 	Customer Customer `json:"customer"`
 }
 
-func LookupCustomer(ctx context.Context, p store.Pool, args LookupCustomerArgs) (*LookupCustomerResponse, error) {
+// LookupCustomer runs the lookup_customer tool. claims is used for the
+// row-level Atlantis filter — a non-privileged lookup of an atlantis customer
+// returns ErrNotFound (the row is filtered out before reaching the handler).
+func LookupCustomer(ctx context.Context, p store.Pool, claims auth.UserClaims, args LookupCustomerArgs) (*LookupCustomerResponse, error) {
 	c, err := p.Acquire(ctx)
 	if err != nil {
 		return nil, err
 	}
 	defer c.Release()
 
-	row := c.QueryRow(ctx, store.SQLLookupCustomer, args.CustomerID)
+	canSeeAtlantis := claims.HasAll([]string{atlantisReadPerm})
+
+	row := c.QueryRow(ctx, store.SQLLookupCustomer, args.CustomerID, canSeeAtlantis)
 	var cust Customer
-	if err := row.Scan(&cust.ID, &cust.Name, &cust.Email, &cust.Phone, &cust.Address, &cust.CreatedAt); err != nil {
+	if err := row.Scan(&cust.ID, &cust.Name, &cust.Email, &cust.Phone, &cust.Address, &cust.CreatedAt, &cust.Region); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, ErrNotFound
 		}

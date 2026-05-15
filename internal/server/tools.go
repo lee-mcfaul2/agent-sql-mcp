@@ -80,7 +80,7 @@ func handleTool(deps Deps) http.HandlerFunc {
 		qctx, cancel := context.WithTimeout(r.Context(), time.Duration(deps.QueryTimeout())*time.Second)
 		defer cancel()
 
-		result, runErr := tools.Registry[toolName](qctx, deps.Pool, rawArgs)
+		result, runErr := tools.Registry[toolName](qctx, deps.Pool, claims, rawArgs)
 
 		if runErr != nil {
 			et, reason := classifyBackendError(runErr)

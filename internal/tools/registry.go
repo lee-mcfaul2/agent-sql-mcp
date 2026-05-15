@@ -4,12 +4,15 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/lee-mcfaul2/agent-sql-mcp/internal/auth"
 	"github.com/lee-mcfaul2/agent-sql-mcp/internal/store"
 )
 
-// ToolFn is the dispatcher-facing signature. Accepts raw (schema-validated) args bytes,
-// returns the typed response struct or an error.
-type ToolFn func(ctx context.Context, p store.Pool, raw json.RawMessage) (any, error)
+// ToolFn is the dispatcher-facing signature. Accepts raw (schema-validated) args
+// bytes plus the caller's UserClaims (used by per-tool authz logic — currently
+// the row-level Atlantis filter on the customer tools). Returns the typed
+// response struct or an error.
+type ToolFn func(ctx context.Context, p store.Pool, claims auth.UserClaims, raw json.RawMessage) (any, error)
 
 // Registry maps tool name to its adapter.
 var Registry = map[string]ToolFn{
@@ -19,23 +22,23 @@ var Registry = map[string]ToolFn{
 	"get_order":       adaptGetOrder,
 }
 
-func adaptSearchCustomer(ctx context.Context, p store.Pool, raw json.RawMessage) (any, error) {
+func adaptSearchCustomer(ctx context.Context, p store.Pool, claims auth.UserClaims, raw json.RawMessage) (any, error) {
 	var args SearchCustomerArgs
 	if err := json.Unmarshal(raw, &args); err != nil {
 		return nil, err
 	}
-	return SearchCustomer(ctx, p, args)
+	return SearchCustomer(ctx, p, claims, args)
 }
 
-func adaptLookupCustomer(ctx context.Context, p store.Pool, raw json.RawMessage) (any, error) {
+func adaptLookupCustomer(ctx context.Context, p store.Pool, claims auth.UserClaims, raw json.RawMessage) (any, error) {
 	var args LookupCustomerArgs
 	if err := json.Unmarshal(raw, &args); err != nil {
 		return nil, err
 	}
-	return LookupCustomer(ctx, p, args)
+	return LookupCustomer(ctx, p, claims, args)
 }
 
-func adaptListOrders(ctx context.Context, p store.Pool, raw json.RawMessage) (any, error) {
+func adaptListOrders(ctx context.Context, p store.Pool, _ auth.UserClaims, raw json.RawMessage) (any, error) {
 	var args ListOrdersArgs
 	if err := json.Unmarshal(raw, &args); err != nil {
 		return nil, err
@@ -43,7 +46,7 @@ func adaptListOrders(ctx context.Context, p store.Pool, raw json.RawMessage) (an
 	return ListOrders(ctx, p, args)
 }
 
-func adaptGetOrder(ctx context.Context, p store.Pool, raw json.RawMessage) (any, error) {
+func adaptGetOrder(ctx context.Context, p store.Pool, _ auth.UserClaims, raw json.RawMessage) (any, error) {
 	var args GetOrderArgs
 	if err := json.Unmarshal(raw, &args); err != nil {
 		return nil, err

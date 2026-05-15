@@ -7,15 +7,18 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/lee-mcfaul2/agent-sql-mcp/internal/auth"
 	"github.com/lee-mcfaul2/agent-sql-mcp/internal/store"
 	"github.com/lee-mcfaul2/agent-sql-mcp/internal/tools"
 )
+
+var conformanceClaims = auth.UserClaims{Sub: "conformance", Permissions: []string{"customers:read"}}
 
 func TestNoInjection_TrailingQuoteIsInert(t *testing.T) {
 	p, cleanup := bootForConformance(t)
 	defer cleanup()
 	hostile := "'; DROP TABLE customers; --"
-	_, err := tools.SearchCustomer(context.Background(), p, tools.SearchCustomerArgs{Name: &hostile})
+	_, err := tools.SearchCustomer(context.Background(), p, conformanceClaims, tools.SearchCustomerArgs{Name: &hostile})
 	if err != nil {
 		t.Errorf("hostile input produced an error (it shouldn't): %v", err)
 	}
@@ -25,7 +28,7 @@ func TestNoInjection_BackslashesEscaped(t *testing.T) {
 	p, cleanup := bootForConformance(t)
 	defer cleanup()
 	hostile := `\\'`
-	_, err := tools.SearchCustomer(context.Background(), p, tools.SearchCustomerArgs{Name: &hostile})
+	_, err := tools.SearchCustomer(context.Background(), p, conformanceClaims, tools.SearchCustomerArgs{Name: &hostile})
 	if err != nil {
 		t.Errorf("backslash input errored: %v", err)
 	}

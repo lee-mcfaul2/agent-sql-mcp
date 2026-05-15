@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/lee-mcfaul2/agent-sql-mcp/internal/auth"
 	"github.com/lee-mcfaul2/agent-sql-mcp/internal/store"
 	"github.com/pashagolub/pgxmock/v4"
 )
@@ -42,6 +43,16 @@ func (r *adaptRows) Scan(d ...any) error { return r.rows.Scan(d...) }
 func (r *adaptRows) Close()              { r.rows.Close() }
 func (r *adaptRows) Err() error          { return r.rows.Err() }
 
+var basicReadClaims = auth.UserClaims{
+	Sub:         "bob@example.com",
+	Permissions: []string{"customers:read"},
+}
+
+var atlantisReadClaims = auth.UserClaims{
+	Sub:         "alice@example.com",
+	Permissions: []string{"customers:read", "customers:atlantis:read"},
+}
+
 func TestSearchCustomer_ReturnsRows(t *testing.T) {
 	mock, err := pgxmock.NewPool()
 	if err != nil {
@@ -50,15 +61,15 @@ func TestSearchCustomer_ReturnsRows(t *testing.T) {
 	defer mock.Close()
 
 	now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
-	cols := []string{"id", "name", "email", "phone", "address", "created_at"}
-	mock.ExpectQuery(`SELECT id, name, email, phone, address, created_at`).
-		WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
+	cols := []string{"id", "name", "email", "phone", "address", "created_at", "region"}
+	mock.ExpectQuery(`SELECT id, name, email, phone, address, created_at, region`).
+		WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
 		WillReturnRows(pgxmock.NewRows(cols).
-			AddRow(int64(1), "Alice", "a@x.com", (*string)(nil), (*string)(nil), now).
-			AddRow(int64(2), "Alicia", "ali@x.com", (*string)(nil), (*string)(nil), now))
+			AddRow(int64(1), "Alice", "a@x.com", (*string)(nil), (*string)(nil), now, "north-america").
+			AddRow(int64(2), "Alicia", "ali@x.com", (*string)(nil), (*string)(nil), now, "north-america"))
 
 	name := "Ali"
-	res, err := SearchCustomer(context.Background(), &adaptPool{mock: mock}, SearchCustomerArgs{Name: &name})
+	res, err := SearchCustomer(context.Background(), &adaptPool{mock: mock}, basicReadClaims, SearchCustomerArgs{Name: &name})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -73,16 +84,66 @@ func TestSearchCustomer_ReturnsRows(t *testing.T) {
 func TestSearchCustomer_EmptyResult(t *testing.T) {
 	mock, _ := pgxmock.NewPool()
 	defer mock.Close()
-	cols := []string{"id", "name", "email", "phone", "address", "created_at"}
-	mock.ExpectQuery(`SELECT id, name, email, phone, address, created_at`).
-		WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
+	cols := []string{"id", "name", "email", "phone", "address", "created_at", "region"}
+	mock.ExpectQuery(`SELECT id, name, email, phone, address, created_at, region`).
+		WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg()).
 		WillReturnRows(pgxmock.NewRows(cols))
 	name := "Nobody"
-	res, err := SearchCustomer(context.Background(), &adaptPool{mock: mock}, SearchCustomerArgs{Name: &name})
+	res, err := SearchCustomer(context.Background(), &adaptPool{mock: mock}, basicReadClaims, SearchCustomerArgs{Name: &name})
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(res.Customers) != 0 {
 		t.Errorf("expected 0 rows, got %d", len(res.Customers))
+	}
+}
+
+// TestSearchCustomer_FiltersAtlantisForNonPrivilegedUser asserts the row-level
+// authz filter: a caller with only customers:read passes canSeeAtlantis=false
+// as the 4th query parameter, which the SQL uses to suppress region='atlantis'
+// rows.
+func TestSearchCustomer_FiltersAtlantisForNonPrivilegedUser(t *testing.T) {
+	mock, _ := pgxmock.NewPool()
+	defer mock.Close()
+
+	cols := []string{"id", "name", "email", "phone", "address", "created_at", "region"}
+	now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	// Expect: name=%, email=nil, phone=nil, canSeeAtlantis=false
+	mock.ExpectQuery(`region != 'atlantis'`).
+		WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), false).
+		WillReturnRows(pgxmock.NewRows(cols).
+			AddRow(int64(1), "Acme", "ops@acme.example", (*string)(nil), (*string)(nil), now, "north-america"))
+
+	q := "%"
+	res, err := SearchCustomer(context.Background(), &adaptPool{mock: mock}, basicReadClaims, SearchCustomerArgs{Name: &q})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Customers) != 1 || res.Customers[0].Region != "north-america" {
+		t.Errorf("unexpected result: %+v", res.Customers)
+	}
+}
+
+// TestSearchCustomer_AtlantisVisibleToPrivilegedUser asserts the same query
+// with the atlantis perm passes canSeeAtlantis=true, so the SQL filter is a
+// no-op and Atlantis rows come through.
+func TestSearchCustomer_AtlantisVisibleToPrivilegedUser(t *testing.T) {
+	mock, _ := pgxmock.NewPool()
+	defer mock.Close()
+
+	cols := []string{"id", "name", "email", "phone", "address", "created_at", "region"}
+	now := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	mock.ExpectQuery(`SELECT .* FROM customers`).
+		WithArgs(pgxmock.AnyArg(), pgxmock.AnyArg(), pgxmock.AnyArg(), true).
+		WillReturnRows(pgxmock.NewRows(cols).
+			AddRow(int64(1), "Atlantis Marine", "sec@atlantis.example", (*string)(nil), (*string)(nil), now, "atlantis"))
+
+	q := "Atlantis"
+	res, err := SearchCustomer(context.Background(), &adaptPool{mock: mock}, atlantisReadClaims, SearchCustomerArgs{Name: &q})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(res.Customers) != 1 || res.Customers[0].Region != "atlantis" {
+		t.Errorf("expected atlantis row to come through, got: %+v", res.Customers)
 	}
 }
