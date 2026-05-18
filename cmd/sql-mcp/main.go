@@ -84,7 +84,12 @@ func main() {
 	}
 	defer pool.Close()
 
-	jwksURL := cfg.OIDCIssuer + "/.well-known/jwks.json"
+	jwksURL, err := auth.DiscoverJWKS(ctx, cfg.OIDCIssuer)
+	if err != nil {
+		log.Error("oidc discovery failed", "issuer", cfg.OIDCIssuer, "err", err)
+		os.Exit(1)
+	}
+	log.Info("oidc discovery ok", "issuer", cfg.OIDCIssuer, "jwks_uri", jwksURL)
 	jwt, err := auth.NewValidator(ctx, cfg.OIDCIssuer, cfg.OIDCAudience, jwksURL, cfg.JWKSRefresh())
 	if err != nil {
 		log.Error("jwt validator init failed", "err", err)

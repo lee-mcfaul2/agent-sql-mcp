@@ -144,3 +144,40 @@ func TestParseBearer(t *testing.T) {
 		t.Errorf("got %q err=%v", tok, err)
 	}
 }
+
+func TestDiscoverJWKS(t *testing.T) {
+	mux := http.NewServeMux()
+	srv := httptest.NewServer(mux)
+	defer srv.Close()
+	// Emulate Dex: discovery at <issuer>/dex/.well-known/openid-configuration,
+	// keys at <issuer>/dex/keys (NOT /.well-known/jwks.json).
+	issuer := srv.URL + "/dex"
+	mux.HandleFunc("/dex/.well-known/openid-configuration", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"issuer":   issuer,
+			"jwks_uri": issuer + "/keys",
+		})
+	})
+
+	got, err := DiscoverJWKS(context.Background(), issuer)
+	if err != nil {
+		t.Fatalf("DiscoverJWKS: %v", err)
+	}
+	if want := issuer + "/keys"; got != want {
+		t.Errorf("jwks_uri: got %q want %q", got, want)
+	}
+
+	// Trailing slash on issuer must not double-slash the discovery path.
+	if _, err := DiscoverJWKS(context.Background(), issuer+"/"); err != nil {
+		t.Errorf("trailing-slash issuer: %v", err)
+	}
+}
+
+func TestDiscoverJWKS_404(t *testing.T) {
+	srv := httptest.NewServer(http.NotFoundHandler())
+	defer srv.Close()
+	if _, err := DiscoverJWKS(context.Background(), srv.URL+"/dex"); err == nil {
+		t.Error("expected error on 404 discovery")
+	}
+}
