@@ -1,6 +1,6 @@
 image:
   repository: ghcr.io/lee-mcfaul2/agent-sql-mcp
-  tag: 0.1.2   # v0.1.2: list_transactions tool (was 0.1.1 OIDC JWKS)
+  tag: 0.1.3   # v0.1.3: per-user authz (perms by sub)
   pullPolicy: IfNotPresent
 
 replicas: 2
