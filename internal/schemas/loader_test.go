@@ -21,8 +21,8 @@ func TestLoad_OK(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(cat.Tools) != 4 {
-		t.Errorf("expected 4 tools, got %d", len(cat.Tools))
+	if len(cat.Tools) != 5 {
+		t.Errorf("expected 5 tools, got %d", len(cat.Tools))
 	}
 	if len(cat.Digest) != 64 {
 		t.Errorf("digest should be 64 hex chars, got %q", cat.Digest)

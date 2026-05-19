@@ -58,7 +58,7 @@ func TestAudit_RowWrittenAfterCall(t *testing.T) {
 func TestSQLConstants_NoFormatVerbs(t *testing.T) {
 	for _, sql := range []string{
 		store.SQLSearchCustomer, store.SQLLookupCustomer,
-		store.SQLListOrders, store.SQLGetOrder, store.SQLGetOrderItems, store.SQLInsertAudit,
+		store.SQLListOrders, store.SQLListTransactions, store.SQLGetOrder, store.SQLGetOrderItems, store.SQLInsertAudit,
 	} {
 		if strings.Contains(sql, "%s") || strings.Contains(sql, "%v") {
 			t.Errorf("format verb in SQL: %s", sql)

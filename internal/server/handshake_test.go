@@ -12,14 +12,16 @@ import (
 
 func TestHandshake_ReturnsVersionAndDigest(t *testing.T) {
 	cat, _ := schemas.LoadFromBytes(map[string][]byte{
-		"search_customer.request.json":  []byte(`{"type":"object"}`),
-		"search_customer.response.json": []byte(`{"type":"object"}`),
-		"lookup_customer.request.json":  []byte(`{"type":"object"}`),
-		"lookup_customer.response.json": []byte(`{"type":"object"}`),
-		"list_orders.request.json":      []byte(`{"type":"object"}`),
-		"list_orders.response.json":     []byte(`{"type":"object"}`),
-		"get_order.request.json":        []byte(`{"type":"object"}`),
-		"get_order.response.json":       []byte(`{"type":"object"}`),
+		"search_customer.request.json":    []byte(`{"type":"object"}`),
+		"search_customer.response.json":   []byte(`{"type":"object"}`),
+		"lookup_customer.request.json":    []byte(`{"type":"object"}`),
+		"lookup_customer.response.json":   []byte(`{"type":"object"}`),
+		"list_orders.request.json":        []byte(`{"type":"object"}`),
+		"list_orders.response.json":       []byte(`{"type":"object"}`),
+		"list_transactions.request.json":  []byte(`{"type":"object"}`),
+		"list_transactions.response.json": []byte(`{"type":"object"}`),
+		"get_order.request.json":          []byte(`{"type":"object"}`),
+		"get_order.response.json":         []byte(`{"type":"object"}`),
 	})
 
 	r := NewRouter(Deps{

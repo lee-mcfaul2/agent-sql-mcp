@@ -16,10 +16,11 @@ type ToolFn func(ctx context.Context, p store.Pool, claims auth.UserClaims, raw 
 
 // Registry maps tool name to its adapter.
 var Registry = map[string]ToolFn{
-	"search_customer": adaptSearchCustomer,
-	"lookup_customer": adaptLookupCustomer,
-	"list_orders":     adaptListOrders,
-	"get_order":       adaptGetOrder,
+	"search_customer":   adaptSearchCustomer,
+	"lookup_customer":   adaptLookupCustomer,
+	"list_orders":       adaptListOrders,
+	"list_transactions": adaptListTransactions,
+	"get_order":         adaptGetOrder,
 }
 
 func adaptSearchCustomer(ctx context.Context, p store.Pool, claims auth.UserClaims, raw json.RawMessage) (any, error) {
@@ -44,6 +45,14 @@ func adaptListOrders(ctx context.Context, p store.Pool, _ auth.UserClaims, raw j
 		return nil, err
 	}
 	return ListOrders(ctx, p, args)
+}
+
+func adaptListTransactions(ctx context.Context, p store.Pool, _ auth.UserClaims, raw json.RawMessage) (any, error) {
+	var args ListTransactionsArgs
+	if err := json.Unmarshal(raw, &args); err != nil {
+		return nil, err
+	}
+	return ListTransactions(ctx, p, args)
 }
 
 func adaptGetOrder(ctx context.Context, p store.Pool, _ auth.UserClaims, raw json.RawMessage) (any, error) {

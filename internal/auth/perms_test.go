@@ -6,7 +6,7 @@ import (
 )
 
 func TestToolPerms_AllToolsRegistered(t *testing.T) {
-	expected := []string{"search_customer", "lookup_customer", "list_orders", "get_order"}
+	expected := []string{"search_customer", "lookup_customer", "list_orders", "list_transactions", "get_order"}
 	for _, tool := range expected {
 		if _, ok := ToolPerms[tool]; !ok {
 			t.Errorf("missing perms for tool: %s", tool)

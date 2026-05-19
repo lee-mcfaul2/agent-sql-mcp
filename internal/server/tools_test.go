@@ -15,7 +15,7 @@ import (
 
 func validSchemaBytes() map[string][]byte {
 	m := map[string][]byte{}
-	for _, t := range []string{"search_customer", "lookup_customer", "list_orders", "get_order"} {
+	for _, t := range []string{"search_customer", "lookup_customer", "list_orders", "list_transactions", "get_order"} {
 		m[t+".request.json"] = []byte(`{"type":"object"}`)
 		m[t+".response.json"] = []byte(`{"type":"object"}`)
 	}

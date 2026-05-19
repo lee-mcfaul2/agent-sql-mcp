@@ -25,6 +25,14 @@ type Order struct {
 	PlacedAt    time.Time `json:"placed_at"`
 }
 
+type Transaction struct {
+	ID          int64     `json:"id"`
+	CustomerID  int64     `json:"customer_id"`
+	AmountCents int64     `json:"amount_cents"`
+	Kind        string    `json:"kind"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 type OrderItem struct {
 	ID        int64  `json:"id"`
 	SKU       string `json:"sku"`

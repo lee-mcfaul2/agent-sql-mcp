@@ -20,6 +20,7 @@ var Tools = []string{
 	"search_customer",
 	"lookup_customer",
 	"list_orders",
+	"list_transactions",
 	"get_order",
 }
 

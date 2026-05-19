@@ -38,6 +38,15 @@ ORDER BY placed_at DESC
 LIMIT $3
 `
 
+	SQLListTransactions = `
+SELECT id, customer_id, amount_cents, kind, created_at
+FROM transactions
+WHERE customer_id = $1
+  AND ($2::timestamptz IS NULL OR created_at >= $2)
+ORDER BY created_at DESC
+LIMIT $3
+`
+
 	SQLGetOrder = `
 SELECT id, customer_id, status, total_cents, currency, placed_at
 FROM orders

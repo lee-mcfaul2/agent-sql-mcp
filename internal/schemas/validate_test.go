@@ -13,13 +13,15 @@ func realBytes(t *testing.T) map[string][]byte {
 			"anyOf":[{"required":["name"]},{"required":["email"]}],
 			"additionalProperties":false
 		}`),
-		"search_customer.response.json": []byte(`{"type":"object"}`),
-		"lookup_customer.request.json":  []byte(`{"type":"object","required":["customer_id"],"properties":{"customer_id":{"type":"integer"}}}`),
-		"lookup_customer.response.json": []byte(`{"type":"object"}`),
-		"list_orders.request.json":      []byte(`{"type":"object","required":["customer_id"],"properties":{"customer_id":{"type":"integer"}}}`),
-		"list_orders.response.json":     []byte(`{"type":"object"}`),
-		"get_order.request.json":        []byte(`{"type":"object","required":["order_id"],"properties":{"order_id":{"type":"integer"}}}`),
-		"get_order.response.json":       []byte(`{"type":"object"}`),
+		"search_customer.response.json":   []byte(`{"type":"object"}`),
+		"lookup_customer.request.json":    []byte(`{"type":"object","required":["customer_id"],"properties":{"customer_id":{"type":"integer"}}}`),
+		"lookup_customer.response.json":   []byte(`{"type":"object"}`),
+		"list_orders.request.json":        []byte(`{"type":"object","required":["customer_id"],"properties":{"customer_id":{"type":"integer"}}}`),
+		"list_orders.response.json":       []byte(`{"type":"object"}`),
+		"list_transactions.request.json":  []byte(`{"type":"object","required":["customer_id"],"properties":{"customer_id":{"type":"integer"}}}`),
+		"list_transactions.response.json": []byte(`{"type":"object"}`),
+		"get_order.request.json":          []byte(`{"type":"object","required":["order_id"],"properties":{"order_id":{"type":"integer"}}}`),
+		"get_order.response.json":         []byte(`{"type":"object"}`),
 	}
 }
 
