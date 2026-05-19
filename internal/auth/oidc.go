@@ -99,9 +99,14 @@ func (v *Validator) Validate(token string) (UserClaims, error) {
 		obs.JWTFailuresTotal.WithLabelValues("missing_claim").Inc()
 		return UserClaims{}, &ValidationError{Reason: "missing_claim", Err: errors.New("sub claim missing")}
 	}
-	perms := claimsStringSlice(t, "permissions")
+	subStr := sub.(string)
+	permsClaim := claimsStringSlice(t, "permissions")
 	groups := claimsStringSlice(t, "groups")
-	return UserClaims{Sub: sub.(string), Permissions: perms, Groups: groups}, nil
+	// Precedence: explicit `permissions` claim → groups-derived → static
+	// demo sub map. Keeps a real IdP working while letting the demo's
+	// Dex (which emits neither claim) drive per-user perms off `sub`.
+	perms := derivePermissions(subStr, permsClaim, groups)
+	return UserClaims{Sub: subStr, Permissions: perms, Groups: groups}, nil
 }
 
 func classify(err error) string {
