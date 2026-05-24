@@ -29,22 +29,38 @@ WHERE id = $1
   AND ($2::bool OR region != 'atlantis')
 `
 
+	// SQLListOrders: customer_id ($1) is NULLABLE so the agent can browse
+	// orders across all customers (necessary for prompts like "how many
+	// orders this year" where the agent doesn't yet know any customer_id).
+	// Whenever customer_id is omitted, the JOIN+($3) row-level filter is
+	// what keeps Atlantis customers' orders hidden from callers without
+	// customers:atlantis:read. The customer-scoped path keeps working
+	// identically when customer_id is supplied.
+	// Params: ($1 customer_id?, $2 since?, $3 canSeeAtlantis, $4 limit).
 	SQLListOrders = `
-SELECT id, customer_id, status, total_cents, currency, placed_at
-FROM orders
-WHERE customer_id = $1
-  AND ($2::timestamptz IS NULL OR placed_at >= $2)
-ORDER BY placed_at DESC
-LIMIT $3
+SELECT o.id, o.customer_id, o.status, o.total_cents, o.currency, o.placed_at
+FROM orders o
+JOIN customers c ON c.id = o.customer_id
+WHERE ($1::bigint IS NULL OR o.customer_id = $1)
+  AND ($2::timestamptz IS NULL OR o.placed_at >= $2)
+  AND ($3::bool OR c.region != 'atlantis')
+ORDER BY o.placed_at DESC
+LIMIT $4
 `
 
+	// SQLListTransactions: same rationale as SQLListOrders -- customer_id
+	// is NULLABLE for cross-customer browsing, and the JOIN+($3) filter
+	// preserves the Atlantis row-level scope.
+	// Params: ($1 customer_id?, $2 since?, $3 canSeeAtlantis, $4 limit).
 	SQLListTransactions = `
-SELECT id, customer_id, amount_cents, kind, created_at
-FROM transactions
-WHERE customer_id = $1
-  AND ($2::timestamptz IS NULL OR created_at >= $2)
-ORDER BY created_at DESC
-LIMIT $3
+SELECT t.id, t.customer_id, t.amount_cents, t.kind, t.created_at
+FROM transactions t
+JOIN customers c ON c.id = t.customer_id
+WHERE ($1::bigint IS NULL OR t.customer_id = $1)
+  AND ($2::timestamptz IS NULL OR t.created_at >= $2)
+  AND ($3::bool OR c.region != 'atlantis')
+ORDER BY t.created_at DESC
+LIMIT $4
 `
 
 	SQLGetOrder = `

@@ -39,20 +39,20 @@ func adaptLookupCustomer(ctx context.Context, p store.Pool, claims auth.UserClai
 	return LookupCustomer(ctx, p, claims, args)
 }
 
-func adaptListOrders(ctx context.Context, p store.Pool, _ auth.UserClaims, raw json.RawMessage) (any, error) {
+func adaptListOrders(ctx context.Context, p store.Pool, claims auth.UserClaims, raw json.RawMessage) (any, error) {
 	var args ListOrdersArgs
 	if err := json.Unmarshal(raw, &args); err != nil {
 		return nil, err
 	}
-	return ListOrders(ctx, p, args)
+	return ListOrders(ctx, p, claims, args)
 }
 
-func adaptListTransactions(ctx context.Context, p store.Pool, _ auth.UserClaims, raw json.RawMessage) (any, error) {
+func adaptListTransactions(ctx context.Context, p store.Pool, claims auth.UserClaims, raw json.RawMessage) (any, error) {
 	var args ListTransactionsArgs
 	if err := json.Unmarshal(raw, &args); err != nil {
 		return nil, err
 	}
-	return ListTransactions(ctx, p, args)
+	return ListTransactions(ctx, p, claims, args)
 }
 
 func adaptGetOrder(ctx context.Context, p store.Pool, _ auth.UserClaims, raw json.RawMessage) (any, error) {
