@@ -61,9 +61,13 @@ func AccessLog(log *slog.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-// SPIFFECheck rejects callers whose forwarded SPIFFE doesn't match the configured gateway identity.
-// Linkerd injects the caller cert into X-Forwarded-Client-Cert; we parse the SPIFFE URI from there.
-func SPIFFECheck(expectedSPIFFE string) func(http.Handler) http.Handler {
+// SPIFFECheck rejects callers whose forwarded identity doesn't match the
+// configured gateway identity. We accept either Linkerd's `l5d-client-id`
+// (DNS-form mesh identity, e.g. `<sa>.<ns>.serviceaccount.identity.linkerd.cluster.local`)
+// or Envoy/Istio's `X-Forwarded-Client-Cert` (SPIFFE URI in the cert).
+// The configured `expectedIdentity` may be a substring of either form;
+// the demo uses the Linkerd DNS form because Linkerd does not emit XFCC.
+func SPIFFECheck(expectedIdentity string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Skip the SPIFFE check for the local liveness probes.
@@ -71,18 +75,20 @@ func SPIFFECheck(expectedSPIFFE string) func(http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			}
-			hdr := r.Header.Get("X-Forwarded-Client-Cert")
-			ok := strings.Contains(hdr, expectedSPIFFE)
+			xfcc := r.Header.Get("X-Forwarded-Client-Cert")
+			l5d := r.Header.Get("l5d-client-id")
+			ok := (xfcc != "" && strings.Contains(xfcc, expectedIdentity)) ||
+				(l5d != "" && strings.Contains(l5d, expectedIdentity))
 			// REVERT-BEFORE-RELEASE: unsafe verbose debug for SPIFFE mismatch hunt
 			slog.Default().Info("spiffe.check.unsafe_debug",
 				"path", r.URL.Path,
-				"expected_spiffe", expectedSPIFFE,
-				"xfcc_header", hdr,
-				"l5d_client_id", r.Header.Get("l5d-client-id"),
+				"expected_identity", expectedIdentity,
+				"xfcc_header", xfcc,
+				"l5d_client_id", l5d,
 				"match", ok,
 			)
 			if !ok {
-				WriteError(w, r, "FORBIDDEN_CALLER", "caller SPIFFE mismatch")
+				WriteError(w, r, "FORBIDDEN_CALLER", "caller identity mismatch")
 				return
 			}
 			next.ServeHTTP(w, r)
