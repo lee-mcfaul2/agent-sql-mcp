@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -111,14 +110,6 @@ func (v *Validator) Validate(token string) (UserClaims, error) {
 	// demo sub map. Keeps a real IdP working while letting the demo's
 	// Dex (which emits neither claim) drive per-user perms off `sub`.
 	perms := derivePermissions(subForPerms, permsClaim, groups)
-	// REVERT-BEFORE-RELEASE: unsafe verbose debug for sub/perms derivation
-	slog.Default().Info("oidc.validate.unsafe_debug",
-		"raw_sub", subStr,
-		"unwrapped_sub", subForPerms,
-		"perms_from_claim", permsClaim,
-		"groups_from_claim", groups,
-		"derived_perms", perms,
-	)
 	return UserClaims{Sub: subStr, Permissions: perms, Groups: groups}, nil
 }
 

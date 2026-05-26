@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -47,15 +46,6 @@ func handleTool(deps Deps) http.HandlerFunc {
 
 		// 3) Permission check
 		required, _ := auth.RequiredFor(toolName)
-		// REVERT-BEFORE-RELEASE: unsafe verbose debug for permission check
-		slog.Default().Info("tool.perm_check.unsafe_debug",
-			"tool", toolName,
-			"claims_sub", claims.Sub,
-			"claims_permissions", claims.Permissions,
-			"claims_groups", claims.Groups,
-			"required", required,
-			"missing", claims.Missing(required),
-		)
 		if missing := claims.Missing(required); len(missing) > 0 {
 			obs.AuthzDenialsTotal.WithLabelValues(toolName, "missing_permission").Inc()
 			obs.ToolCallsTotal.WithLabelValues(toolName, "permission_denied").Inc()

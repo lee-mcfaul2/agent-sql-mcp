@@ -79,14 +79,6 @@ func SPIFFECheck(expectedIdentity string) func(http.Handler) http.Handler {
 			l5d := r.Header.Get("l5d-client-id")
 			ok := (xfcc != "" && strings.Contains(xfcc, expectedIdentity)) ||
 				(l5d != "" && strings.Contains(l5d, expectedIdentity))
-			// REVERT-BEFORE-RELEASE: unsafe verbose debug for SPIFFE mismatch hunt
-			slog.Default().Info("spiffe.check.unsafe_debug",
-				"path", r.URL.Path,
-				"expected_identity", expectedIdentity,
-				"xfcc_header", xfcc,
-				"l5d_client_id", l5d,
-				"match", ok,
-			)
 			if !ok {
 				WriteError(w, r, "FORBIDDEN_CALLER", "caller identity mismatch")
 				return
