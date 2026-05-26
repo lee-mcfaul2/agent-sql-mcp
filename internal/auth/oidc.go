@@ -101,15 +101,20 @@ func (v *Validator) Validate(token string) (UserClaims, error) {
 		return UserClaims{}, &ValidationError{Reason: "missing_claim", Err: errors.New("sub claim missing")}
 	}
 	subStr := sub.(string)
+	// Dex's password connector base64-wraps userID+connector into `sub`, so
+	// demoPermsBySub (keyed by the bare userID) never matches without an
+	// unwrap. unwrapDexSub is a no-op for non-Dex callers.
+	subForPerms := unwrapDexSub(subStr)
 	permsClaim := claimsStringSlice(t, "permissions")
 	groups := claimsStringSlice(t, "groups")
 	// Precedence: explicit `permissions` claim → groups-derived → static
 	// demo sub map. Keeps a real IdP working while letting the demo's
 	// Dex (which emits neither claim) drive per-user perms off `sub`.
-	perms := derivePermissions(subStr, permsClaim, groups)
+	perms := derivePermissions(subForPerms, permsClaim, groups)
 	// REVERT-BEFORE-RELEASE: unsafe verbose debug for sub/perms derivation
 	slog.Default().Info("oidc.validate.unsafe_debug",
 		"raw_sub", subStr,
+		"unwrapped_sub", subForPerms,
 		"perms_from_claim", permsClaim,
 		"groups_from_claim", groups,
 		"derived_perms", perms,
