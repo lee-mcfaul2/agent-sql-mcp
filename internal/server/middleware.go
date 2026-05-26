@@ -72,7 +72,16 @@ func SPIFFECheck(expectedSPIFFE string) func(http.Handler) http.Handler {
 				return
 			}
 			hdr := r.Header.Get("X-Forwarded-Client-Cert")
-			if !strings.Contains(hdr, expectedSPIFFE) {
+			ok := strings.Contains(hdr, expectedSPIFFE)
+			// REVERT-BEFORE-RELEASE: unsafe verbose debug for SPIFFE mismatch hunt
+			slog.Default().Info("spiffe.check.unsafe_debug",
+				"path", r.URL.Path,
+				"expected_spiffe", expectedSPIFFE,
+				"xfcc_header", hdr,
+				"l5d_client_id", r.Header.Get("l5d-client-id"),
+				"match", ok,
+			)
+			if !ok {
 				WriteError(w, r, "FORBIDDEN_CALLER", "caller SPIFFE mismatch")
 				return
 			}
