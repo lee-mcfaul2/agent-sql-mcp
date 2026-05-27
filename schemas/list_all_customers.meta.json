@@ -1,0 +1,5 @@
+{
+  "description": "List recent customers, no filtering. Use when the user asks for 'all customers', 'recent customers', or wants to see customer rows without already knowing a name/email/phone. Optional 'limit' (1-100, default 25). For finding a specific customer by name/email/phone, use search_customer instead.",
+  "requires_permissions": ["customers:read"],
+  "write": false
+}

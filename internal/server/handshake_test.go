@@ -11,18 +11,15 @@ import (
 )
 
 func TestHandshake_ReturnsVersionAndDigest(t *testing.T) {
-	cat, _ := schemas.LoadFromBytes(map[string][]byte{
-		"search_customer.request.json":    []byte(`{"type":"object"}`),
-		"search_customer.response.json":   []byte(`{"type":"object"}`),
-		"lookup_customer.request.json":    []byte(`{"type":"object"}`),
-		"lookup_customer.response.json":   []byte(`{"type":"object"}`),
-		"list_orders.request.json":        []byte(`{"type":"object"}`),
-		"list_orders.response.json":       []byte(`{"type":"object"}`),
-		"list_transactions.request.json":  []byte(`{"type":"object"}`),
-		"list_transactions.response.json": []byte(`{"type":"object"}`),
-		"get_order.request.json":          []byte(`{"type":"object"}`),
-		"get_order.response.json":         []byte(`{"type":"object"}`),
-	})
+	files := map[string][]byte{}
+	for _, t := range []string{
+		"search_customer", "lookup_customer", "list_orders", "list_transactions", "get_order",
+		"list_all_customers", "list_all_orders", "list_all_transactions",
+	} {
+		files[t+".request.json"] = []byte(`{"type":"object"}`)
+		files[t+".response.json"] = []byte(`{"type":"object"}`)
+	}
+	cat, _ := schemas.LoadFromBytes(files)
 
 	r := NewRouter(Deps{
 		Log:            nullLogger(),

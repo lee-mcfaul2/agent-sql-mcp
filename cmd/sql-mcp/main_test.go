@@ -9,9 +9,9 @@ func TestEmbeddedSchemaFiles_LoadsAll(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Fifteen files: meta+req+resp for five tools (meta.json added by the
-	// lib-agent-prompt v1.0 schema propagation).
-	if len(files) != 15 {
-		t.Errorf("expected 15 files, got %d", len(files))
+	// 24 files: meta+req+resp for eight tools (original five + three
+	// list_all_<table> browse tools).
+	if len(files) != 24 {
+		t.Errorf("expected 24 files, got %d", len(files))
 	}
 }

@@ -22,6 +22,9 @@ var Tools = []string{
 	"list_orders",
 	"list_transactions",
 	"get_order",
+	"list_all_customers",
+	"list_all_orders",
+	"list_all_transactions",
 }
 
 // Catalog holds the loaded raw schemas + the computed digest.

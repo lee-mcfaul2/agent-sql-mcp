@@ -76,6 +76,18 @@ WHERE order_id = $1
 ORDER BY id ASC
 `
 
+	// SQLListAllCustomers: enumerate customers up to a limit. Same row-level
+	// Atlantis filter as the other customer tools (callers without
+	// customers:atlantis:read don't see those rows).
+	// Params: ($1 canSeeAtlantis, $2 limit).
+	SQLListAllCustomers = `
+SELECT id, name, email, phone, address, created_at, region
+FROM customers
+WHERE ($1::bool OR region != 'atlantis')
+ORDER BY created_at DESC
+LIMIT $2
+`
+
 	SQLInsertAudit = `
 INSERT INTO mcp_audit (user_sub, tool, outcome, duration_ms, reason)
 VALUES ($1, $2, $3, $4, $5)

@@ -22,6 +22,12 @@ func realBytes(t *testing.T) map[string][]byte {
 		"list_transactions.response.json": []byte(`{"type":"object"}`),
 		"get_order.request.json":          []byte(`{"type":"object","required":["order_id"],"properties":{"order_id":{"type":"integer"}}}`),
 		"get_order.response.json":         []byte(`{"type":"object"}`),
+		"list_all_customers.request.json":    []byte(`{"type":"object"}`),
+		"list_all_customers.response.json":   []byte(`{"type":"object"}`),
+		"list_all_orders.request.json":       []byte(`{"type":"object"}`),
+		"list_all_orders.response.json":      []byte(`{"type":"object"}`),
+		"list_all_transactions.request.json": []byte(`{"type":"object"}`),
+		"list_all_transactions.response.json":[]byte(`{"type":"object"}`),
 	}
 }
 

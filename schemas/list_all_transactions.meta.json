@@ -1,0 +1,5 @@
+{
+  "description": "List recent transactions across ALL customers, no filtering. Use when the user asks for 'all transactions', 'recent transactions', or any aggregate over transactions without a specific customer. Optional 'limit' (1-100, default 25).",
+  "requires_permissions": ["transactions:read"],
+  "write": false
+}
