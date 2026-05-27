@@ -26,6 +26,7 @@ type Deps struct {
 func NewRouter(deps Deps) http.Handler {
 	r := chi.NewRouter()
 	r.Use(RequestID)
+	r.Use(Trace)
 	r.Use(Recover(deps.Log))
 	r.Use(AccessLog(deps.Log))
 	r.Use(SPIFFECheck(deps.ExpectedSPIFFE))

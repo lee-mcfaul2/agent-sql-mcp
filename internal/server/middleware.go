@@ -10,7 +10,25 @@ import (
 	"time"
 
 	chimw "github.com/go-chi/chi/v5/middleware"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
+
+// Trace extracts the inbound W3C `traceparent` and starts a span per request.
+// Without this each MCP call would be a separate root trace; pairing the
+// gateway's propagator with this middleware stitches the MCP work into the
+// caller's trace -- a Tempo search by trace_id finds gateway + sandbox +
+// MCP spans for the same prompt.
+func Trace(next http.Handler) http.Handler {
+	tracer := otel.Tracer("agent-sql-mcp")
+	prop := otel.GetTextMapPropagator()
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := prop.Extract(r.Context(), propagation.HeaderCarrier(r.Header))
+		ctx, span := tracer.Start(ctx, r.URL.Path)
+		defer span.End()
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
 
 // RequestID assigns or propagates X-Request-ID.
 func RequestID(next http.Handler) http.Handler {
